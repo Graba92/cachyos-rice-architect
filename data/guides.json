@@ -1,0 +1,149 @@
+{
+    "1": {
+        "category": "UI/Design-Tweaks",
+        "title": "KDE Plasma 6 (Wayland) KWin & Effekte",
+        "tags": [
+            "kde",
+            "plasma6",
+            "wayland",
+            "kwin",
+            "blur"
+        ],
+        "content": "## KDE Plasma 6 (Wayland) - Compositing & Effekte\nUnter CachyOS ist Plasma 6 standardmäßig auf Wayland konfiguriert. **KWin** übernimmt das komplette Compositing. **Regel Nummer 1: Picom ist hier absolut tot und nutzlos.**\n\n### Was bewirkt die Änderung?\nDu optimierst Fensterrahmen, Transparenz und das Verhalten von spezifischen Apps (wie Visualizern), ohne das System durch externe Compositor zu destabilisieren.\n\n### Betroffene Parameter\n- `~/.config/kwinrc` (KWin Konfiguration)\n- Plasma-Stile (Desktop Theme) vs. App-Stile (Kvantum/Qt6ct)\n\n### Schritt-für-Schritt Anleitung\n1. **Rahmen anpassen:** Installiere `klassy` (AUR: `yay -S klassy`) oder nutze native KWin-Dekorationen. Gehe in den Systemeinstellungen auf *Fensterdekorationen* und wähle Klassy für feingranulare Ränder und Headerbar-Transparenz.\n2. **Blur aktivieren:** Systemeinstellungen -> *Arbeitsbereich-Verhalten* -> *Desktop-Effekte* -> \"Hintergrundunschärfe\" aktivieren.\n3. **Window Rules (Fensterregeln) für Glava & Cava:**\n   - Starte Glava oder dein Terminal im Floating-Modus.\n   - Drücke `Alt + F3` auf dem Fenster -> *Weitere Aktionen* -> *Spezielle Einstellungen für dieses Fenster*.\n   - Setze Haken bei: `Keine Titelleiste und Rahmen` (Erzwingen), `Immer im Hintergrund` (Erzwingen), `Auf allen Arbeitsflächen sichtbar` (Erzwingen).\n\n### Risiken & Fallback\n- **Risiko:** Falsche KWin-Regeln können Fenster unsichtbar oder unbedienbar machen.\n- **Fallback:** Lösche oder editiere die `~/.config/kwinrulesrc` im TTY, falls die GUI crasht, und starte KWin mit `kwin_wayland --replace &` neu."
+    },
+    "2": {
+        "category": "Standalone Compositors",
+        "title": "Tiling Stacks: Hyprland & Niri",
+        "tags": [
+            "hyprland",
+            "niri",
+            "tiling",
+            "wayland",
+            "wlroots"
+        ],
+        "content": "## Standalone Wayland Compositors\nWenn Plasma 6 zu schwer wird, ziehen wir einen autarken Stack hoch. Hyprland für dynamisches Grid-Tiling, Niri für endloses Scroll-Tiling. Beides sind keine DE-Plugins, sondern ersetzen KDE für diese Sitzung komplett!\n\n### Was bewirkt die Änderung?\nDu steuerst Fenster zu 100% per Tastatur. Animationen, Gaps und Shader werden nativ von der GPU durch den Compositor berechnet.\n\n### Betroffene Dateien\n- `~/.config/hypr/hyprland.conf`\n- `~/.config/niri/config.kdl`\n- Waybar: `~/.config/waybar/config` & `style.css`\n\n### Schritt-für-Schritt Anleitung (Hyprland)\n1. **Basis installieren:** `sudo pacman -S hyprland waybar swaybg`\n2. **Config generieren:** Starte Hyprland einmal (im SDDM auswählen), es generiert die Default-Config.\n3. **Monitore definieren:** Öffne `hyprland.conf` und setze: `monitor=,preferred,auto,1`\n4. **Eye-Candy (Gaps & Borders):**\n   ```ini\n   general {\n       gaps_in = 5\n       gaps_out = 10\n       border_size = 2\n       col.active_border = rgba(33ccffee) rgba(00ff99ee) 45deg\n   }\n   ```\n5. **Autostart:** Trage `exec-once = waybar & swaybg -i /pfad/zum/wallpaper.jpg` ein.\n\n### Risiken & Fallback\n- **Risiko:** Fehler in der Config führen zu einem schwarzen Bildschirm oder Bootloop in SDDM.\n- **Fallback:** Strg+Alt+F3 ins TTY wechseln, Config mit `nano` fixen."
+    },
+    "3": {
+        "category": "Konfigurationsdateien",
+        "title": "Fish-Shell & Alacritty Setup",
+        "tags": [
+            "fish",
+            "shell",
+            "alacritty",
+            "starship",
+            "terminal"
+        ],
+        "content": "## Terminal-Workflow: Fish & Alacritty\nKein GUI-Bloat. Alacritty nutzt reines OpenGL für rasantes Rendering. Fish ist die modernste Shell, die ohne 20 ZSH-Plugins direkt mit Autosuggestions punktet.\n\n### Was bewirkt die Änderung?\nMinimalste Latenz beim Tippen (Alacritty) und ein intelligenter Prompt (Starship), der Git-Status, Python-Venvs und Exit-Codes anzeigt.\n\n### Betroffene Dateien\n- `~/.config/alacritty/alacritty.toml`\n- `~/.config/fish/config.fish`\n- `~/.config/starship.toml`\n\n### Schritt-für-Schritt Anleitung\n1. **Pakete:** `sudo pacman -S alacritty fish starship ttf-firacode-nerd`\n2. **Fish als Default setzen:** `chsh -s /usr/bin/fish` (Logout/Login nötig).\n3. **Starship in Fish injizieren:**\n   Öffne `~/.config/fish/config.fish` und füge am Ende ein:\n   ```fish\n   starship init fish | source\n   set -U fish_greeting \"\"\n   ```\n4. **Alacritty Tuning (`alacritty.toml`):**\n   ```toml\n   [window]\n   padding = { x = 10, y = 10 }\n   opacity = 0.85\n   blur = true\n\n   [font]\n   normal = { family = \"FiraCode Nerd Font\", style = \"Regular\" }\n   size = 11.0\n   ```\n\n### Risiken & Fallback\n- **Risiko:** Falsche Syntax in der `.toml` lässt Alacritty abstürzen.\n- **Fallback:** Konsole öffnen, `alacritty -e fish` im Debug-Modus starten, Fehler auslesen und Config fixen."
+    },
+    "4": {
+        "category": "System-Tuning",
+        "title": "CachyOS Kernel & BORE Scheduler",
+        "tags": [
+            "kernel",
+            "bore",
+            "performance",
+            "scheduler",
+            "sysctl"
+        ],
+        "content": "## System-Tuning: Kernel & Scheduler\nCachyOS glänzt durch seine optimierten Kernel (x86_64-v3/v4). Der BORE (Burst-Oriented Response Enhancer) Scheduler priorisiert interaktive Tasks massiv.\n\n### Was bewirkt die Änderung?\nMaximale Responsiveness auf dem Desktop und weniger Latenz bei Audio-Produktion oder Gaming, da Hintergrundprozesse strikter abgewürgt werden, wenn der Desktop Leistung braucht.\n\n### Betroffene Parameter\n- `/etc/sysctl.d/99-cachyos-settings.conf`\n- Grub/Limine Boot-Parameter\n\n### Schritt-für-Schritt Anleitung\n1. **Kernel-Check:** Führe `uname -r` aus. CachyOS sollte standardmäßig den `linux-cachyos` oder `linux-cachyos-bore` installiert haben.\n2. **Paket-Management:** Falls du wechseln willst:\n   ```bash\n   sudo pacman -S linux-cachyos-bore linux-cachyos-bore-headers\n   ```\n3. **Sysctl-Tweaks (Optional für Network/Audio):**\n   Füge in `/etc/sysctl.d/99-custom.conf` ein:\n   ```ini\n   vm.swappiness = 10\n   fs.inotify.max_user_watches = 524288\n   ```\n   Übernehmen mit: `sudo sysctl --system`\n\n### Risiken & Fallback\n- **Risiko:** Ein neuer Kernel bootet vielleicht nicht wegen Grafiktreiber-Inkompatibilitäten (DKMS).\n- **Fallback:** Im Bootloader (Grub/Limine) immer den Fallback-Kernel oder LTS-Kernel als Backup behalten!"
+    },
+    "5": {
+        "category": "Theming & Styling",
+        "title": "Konsistentes Qt6/Qt5/GTK-Theming (Kvantum & Plasma 6)",
+        "tags": [
+            "theming",
+            "kvantum",
+            "qt6ct",
+            "gtk",
+            "plasma6",
+            "wayland"
+        ],
+        "content": "## Konsistentes Theming über alle Toolkits (Qt6, Qt5 & GTK)\nUnter KDE Plasma 6 verwenden Desktop-Anwendungen primär Qt6. Viele Tools (GIMP, Inkscape, Firefox, Alacritty) basieren jedoch auf GTK oder älterem Qt5. Ohne Abstimmung führt dies zu uneinheitlichen Rändern, falschen Farben und abgehacktem Dark-Mode.\n\n### Was bewirkt die Änderung?\nEin nahtloses Designsystem: Alle Apps respektieren dasselbe Farbschema, denselben Cursor-Stil und transparente/geblurrte Fensterstile via Kvantum.\n\n### Betroffene Konfigurationen\n- `~/.config/Kvantum/kvantum.kvconfig`\n- `~/.config/gtk-3.0/settings.ini` & `~/.config/gtk-4.0/settings.ini`\n- `/etc/environment` oder `~/.config/environment.d/`\n\n### Schritt-für-Schritt Anleitung\n1. **Pakete verifizieren:**\n   ```bash\n   sudo pacman -S kvantum qt6ct qt5ct breeze-gtk\n   ```\n2. **Umgebungsvariablen für Toolkits setzen:**\n   In Plasma 6 integriert KDE standardmäßig GTK-Settings. Falls Apps abweichen, setze in `~/.bashrc` bzw. `~/.config/fish/config.fish`:\n   ```fish\n   set -gx QT_STYLE_OVERRIDE kvantum\n   ```\n3. **Kvantum Manager konfigurieren:**\n   - Öffne `kvantummanager`.\n   - Wähle ein konsistentes Theme (z.B. *KvLibadwaitaDark*, *Catppuccin-Mocha* oder *Nordic*).\n   - Aktiviere unter *Configure Active Style* -> *Compositing & General*: Transparenzen und Blur.\n4. **GTK-Sync in KDE:**\n   In den Plasma-Systemeinstellungen -> *Erscheinungsbild* -> *Anwendungs-Stil* -> *GNOME/GTK-Anwendungs-Stile konfigurieren*: Breeze-Dark oder Kvantum-angepasstes Theme wählen.\n\n### Risiken & Fallback\n- **Risiko:** Falsche `QT_QPA_PLATFORMTHEME` Variablen können Qt-Programme unter Plasma crashen lassen. Unter Plasma 6 sollte die Variable im Zweifel ungesetzt bleiben (`kde` ist Default).\n- **Fallback:** Lösche `~/.config/Kvantum/` um auf Standard-Breeze zurückzukehren."
+    },
+    "6": {
+        "category": "Launcher & Navigation",
+        "title": "Rofi-Wayland & Fuzzel: Schnelle App-Launcher",
+        "tags": [
+            "rofi",
+            "rofi-wayland",
+            "fuzzel",
+            "launcher",
+            "dmenu"
+        ],
+        "content": "## Moderne Application Launcher für Wayland\nTraditionelles `rofi` funktioniert unter Wayland oft nur unzuverlässig oder via XWayland. Mit `rofi-wayland` oder `fuzzel` erhältst du native Wayland-Popups ohne Latenz.\n\n### Was bewirkt die Änderung?\nStarten von Programmen, Durchsuchen von Fenstern, Ausführen von Shell-Befehlen und Zwischenablage-Historie (Clipboard Manager) per Tastenkombination (z.B. Super/Meta + Space).\n\n### Betroffene Dateien\n- `~/.config/rofi/config.rasi`\n- `~/.config/fuzzel/fuzzel.ini`\n\n### Schritt-für-Schritt Anleitung (Rofi-Wayland)\n1. **Installation:**\n   ```bash\n   sudo pacman -S rofi-wayland cliphist wl-clipboard\n   ```\n2. **Einfache Rofi-Konfiguration anlegen:**\n   Erstelle `~/.config/rofi/config.rasi`:\n   ```rasi\n   configuration {\n       modi: \"drun,run,window\";\n       font: \"FiraCode Nerd Font 11\";\n       show-icons: true;\n       terminal: \"alacritty\";\n       display-drun: \"Apps:\";\n       drun-match-fields: \"name,generic,exec,categories\";\n   }\n   @theme \"solarized\"\n   ```\n3. **Clipboard-Historie einbinden:**\n   Starte Cliphist-Dämon im Autostart:\n   ```bash\n   wl-paste --watch cliphist store &\n   ```\n   Rofi-Shortcut für Zwischenablage:\n   ```bash\n   cliphist list | rofi -dmenu -p \"Clipboard\" | cliphist decode | wl-copy\n   ```\n\n### Risiken & Fallback\n- **Risiko:** Rasi-Syntaxfehler verhindern den Start von Rofi.\n- **Fallback:** Rofi mit `rofi -show drun` im Terminal testen, Fehlermeldungen analysieren und Default-Theme laden mit `rofi -theme-str 'window {width: 40%;}'`."
+    },
+    "7": {
+        "category": "Bars & Widgets",
+        "title": "Waybar & AGS: Moderne Statuspanels",
+        "tags": [
+            "waybar",
+            "ags",
+            "gtk4",
+            "css",
+            "bar",
+            "status"
+        ],
+        "content": "## Statusbars für Wayland: Waybar & Aylur's GTK Shell (AGS)\nOb für Hyprland, Niri oder minimalistische Plasma-Sitzungen: Waybar ist der etablierte GTK3-Standard für hochperformante Leisten, während AGS (Aylur's GTK Shell) volle GTK4-Animationen und TypeScript-Logik bietet.\n\n### Was bewirkt die Änderung?\nLive-Überwachung von CPU-Last, BORE-Kernel-Tasks, Audiostatus (PipeWire), Akku, Netzwerk und aktiven Workspaces direkt am Bildschirmrand.\n\n### Betroffene Dateien\n- `~/.config/waybar/config.jsonc`\n- `~/.config/waybar/style.css`\n\n### Schritt-für-Schritt Anleitung (Waybar)\n1. **Paket installieren:**\n   ```bash\n   sudo pacman -S waybar otf-font-awesome\n   ```\n2. **Minimale `config.jsonc`:**\n   ```json\n   {\n       \"layer\": \"top\",\n       \"position\": \"top\",\n       \"modules-left\": [\"custom/cachy\", \"workspaces\"],\n       \"modules-center\": [\"clock\"],\n       \"modules-right\": [\"pulseaudio\", \"cpu\", \"memory\", \"tray\"],\n       \"custom/cachy\": {\n           \"format\": \"  CachyOS \",\n           \"tooltip\": false\n       },\n       \"cpu\": {\n           \"interval\": 2,\n           \"format\": \"CPU: {usage}%\"\n       },\n       \"memory\": {\n           \"format\": \"RAM: {}%\"\n       }\n   }\n   ```\n3. **Styling mit CSS (`style.css`):**\n   ```css\n   window#waybar {\n       background-color: rgba(20, 24, 30, 0.85);\n       border-bottom: 2px solid #00d2ff;\n       color: #ffffff;\n       font-family: \"FiraCode Nerd Font\";\n   }\n   #workspaces button.active {\n       background-color: #00d2ff;\n       color: #000000;\n       border-radius: 4px;\n   }\n   ```\n\n### Risiken & Fallback\n- **Risiko:** JSONC-Syntaxfehler (vergessene Kommas) führen zum stillen Beenden von Waybar.\n- **Fallback:** Im Terminal starten: `waybar -l debug`, um Parsing-Fehler sofort zu lokalisieren."
+    },
+    "8": {
+        "category": "Audio & Visualizer",
+        "title": "PipeWire Low-Latency & Cava Audio-Visualizer",
+        "tags": [
+            "pipewire",
+            "audio",
+            "cava",
+            "wireplumber",
+            "latency"
+        ],
+        "content": "## Audio-Setup: PipeWire Low-Latency & Cava TUI-Visualizer\nCachyOS liefert PipeWire als modernen Sound-Server mit nativem JACK- und ALSA-Support. Mit den richtigen Puffern erzielst du extrem niedrige Latenzen und exakte Visualisierung in Cava.\n\n### Was bewirkt die Änderung?\nFlüssige Echtzeit-Audiosynchronisation ohne Knackser oder Verzögerungen bei Rhythmus-Visualizern.\n\n### Betroffene Konfigurationen\n- `/etc/pipewire/pipewire.conf.d/` oder `~/.config/pipewire/`\n- `~/.config/cava/config`\n\n### Schritt-für-Schritt Anleitung\n1. **Pakete:**\n   ```bash\n   sudo pacman -S cava pipewire-pulse wireplumber\n   ```\n2. **Cava für PipeWire konfigurieren:**\n   Editiere `~/.config/cava/config`:\n   ```ini\n   [general]\n   framerate = 60\n   bars = 48\n   bar_width = 2\n   bar_spacing = 1\n\n   [input]\n   method = pipewire\n   source = auto\n\n   [color]\n   gradient = 1\n   gradient_color_1 = '#00ffff'\n   gradient_color_2 = '#ff007f'\n   ```\n3. **PipeWire Quantum (Latenz) einstellen:**\n   Temporärer Test für extrem niedrige Latenz (256 Samples bei 48kHz):\n   ```bash\n   pw-metadata -n settings 0 clock.force-quantum 256\n   ```\n\n### Risiken & Fallback\n- **Risiko:** Zu niedrige Quantum-Werte (<128) auf älteren CPUs erzeugen Xruns (Knistern).\n- **Fallback:** Quantum zurücksetzen mit `pw-metadata -n settings 0 clock.force-quantum 0` (Auto-Modus)."
+    },
+    "9": {
+        "category": "Wallpaper & Visuals",
+        "title": "Dynamische Wallpaper-Engines: swww & mpvpaper",
+        "tags": [
+            "swww",
+            "wallpaper",
+            "mpvpaper",
+            "video",
+            "wayland"
+        ],
+        "content": "## Moderne Wayland-Wallpaper: Animierte Übergänge & Live-Videos\nUnter X11 nutzte man feh oder nitrogen. Unter Wayland dominieren hardwarebeschleunigte Tools wie `swww` (weiche Shader-Animationen beim Wallpaper-Wechsel) und `mpvpaper` (Loop-Videos mit GPU-Decoding).\n\n### Was bewirkt die Änderung?\nGlatte Framerates ohne Desktop-Lag. Keine hohe CPU-Last bei Live-Wallpapers, da Wayland-Surfaces direkt über DRM/KMS gerendert werden.\n\n### Betroffene Tools\n- `swww` (AUR: `yay -S swww`)\n- `mpvpaper` (`sudo pacman -S mpvpaper`)\n\n### Schritt-für-Schritt Anleitung\n1. **swww Initialisierung:**\n   Starte den Daemon:\n   ```bash\n   swww-daemon &\n   ```\n2. **Wallpaper mit Shader-Effekt setzen:**\n   ```bash\n   swww img ~/Bilder/wallpaper.png --transition-type wave --transition-angle 30 --transition-step 90\n   ```\n   (Verfügbare Übergänge: `fade`, `wipe`, `wave`, `grow`, `center`, `outer`).\n3. **Video-Wallpaper mit mpvpaper:**\n   ```bash\n   mpvpaper -vs -o \"no-audio --loop\" DP-1 ~/Videos/cyberpunk_loop.mp4\n   ```\n\n### Risiken & Fallback\n- **Risiko:** 4K-Videos ohne Hardwarebeschleunigung belasten GPU/CPU spürbar.\n- **Fallback:** Auf statische Hintergründe via `swaybg -i wallpaper.jpg` oder KDE Plasma eigene Hintergrundeinstellungen umschalten."
+    },
+    "10": {
+        "category": "TUI & CLI-Tools",
+        "title": "TUI-Powerhouse: Fastfetch, Btop & Yazi",
+        "tags": [
+            "fastfetch",
+            "btop",
+            "yazi",
+            "terminal",
+            "tui",
+            "cli"
+        ],
+        "content": "## TUI Powerhouse: System-Monitoring & Dateimanagement im Terminal\nKein Terminal-Rice ist komplett ohne moderne Terminal-Utilities. Fastfetch ersetzt Neofetch (100x schneller in C), btop bietet grafische Kurven für CPU/GPU/IO, und Yazi ermöglicht asynchrones Navigieren mit Bildervorschau.\n\n### Was bewirkt die Änderung?\nSofortige Auswertung der Hardware und blitzschnelles Datei-Handling direkt aus der Fish-Shell heraus.\n\n### Betroffene Dateien\n- `~/.config/fastfetch/config.jsonc`\n- `~/.config/btop/btop.conf`\n- `~/.config/yazi/yazi.toml`\n\n### Schritt-für-Schritt Anleitung\n1. **Pakete installieren:**\n   ```bash\n   sudo pacman -S fastfetch btop yazi\n   ```\n2. **Fastfetch anpassen:**\n   Generiere Default-Config:\n   ```bash\n   fastfetch --gen-config\n   ```\n   Öffne `~/.config/fastfetch/config.jsonc` und passe Module an (z.B. Kernel, Uptime, Memory, Disk, GPU).\n3. **Btop Theme:**\n   Starte `btop`, drücke `Esc` -> *Options* -> *Color theme*: Wähle z.B. `gruvbox_dark` oder `tomorrow-night`.\n4. **Yazi Bild-Vorschau auf Wayland:**\n   Yazi nutzt standardmäßig Sixel oder Kitty-Graphics-Protokoll. Unter Alacritty mit Sixel-Patch oder Kitty funktioniert Bildvorschau sofort.\n\n### Risiken & Fallback\n- **Risiko:** Sehr große Verzeichnisse in älteren Terminal-Managern blockieren. Yazi ist komplett async in Rust implementiert und immun gegen UI-Freezes."
+    },
+    "11": {
+        "category": "Session Management",
+        "title": "Wayland Session Security: hyprlock & hypridle",
+        "tags": [
+            "hyprlock",
+            "hypridle",
+            "lockscreen",
+            "security",
+            "wayland"
+        ],
+        "content": "## Bildschirm sperren & Energiesparen: hyprlock & hypridle\nWayland benötigt dedizierte Lockscreen-Implementierungen, die über das Wayland-Ext-Session-Lock-Protokoll arbeiten. Dies verhindert, dass Anwendungen den Lockscreen umgehen können.\n\n### Was bewirkt die Änderung?\nÄsthetischer Sperrbildschirm mit Hintergrundunschärfe, Live-Uhrzeit, PAM-Passwortabfrage und automatischer Bildschirmabschaltung nach Inaktivität.\n\n### Betroffene Dateien\n- `~/.config/hypr/hyprlock.conf`\n- `~/.config/hypr/hypridle.conf`\n\n### Schritt-für-Schritt Anleitung\n1. **Installation:**\n   ```bash\n   sudo pacman -S hyprlock hypridle\n   ```\n2. **Hyprlock Konfiguration (`~/.config/hypr/hyprlock.conf`):**\n   ```ini\n   background {\n       monitor =\n       path = screenshot\n       blur_passes = 3\n       blur_size = 8\n   }\n   input-field {\n       monitor =\n       size = 200, 50\n       outline_thickness = 3\n       dots_size = 0.33\n       fade_on_empty = true\n       placeholder_text = <i>Passwort eingeben...</i>\n   }\n   ```\n3. **Hypridle Autostart:**\n   Definiere Timeout-Regeln für Bildschirmschoner und Standby.\n\n### Risiken & Fallback\n- **Risiko:** Bei Fehlkonfiguration von PAM kann man sich aussperren.\n- **Fallback:** Wechsle mit `Strg+Alt+F3` ins TTY, logge dich ein und kille hyprlock (`killall hyprlock`)."
+    },
+    "12": {
+        "category": "Schriften & Typografie",
+        "title": "Nerd Fonts & Fontconfig: Richtiges Rendering & Glyphen",
+        "tags": [
+            "fonts",
+            "nerd-fonts",
+            "fontconfig",
+            "subpixel",
+            "icons"
+        ],
+        "content": "## Typografie & Icon-Rendering: Fontconfig & Nerd Fonts\nFehlende Icons in der Statusleiste (Kästchen statt Symbole) oder unscharfe Schriftkanten ruinieren jedes Setup. Mit Nerd Fonts und einer sauberen Fontconfig-Kette renderst du gestochen scharfe Schriften.\n\n### Was bewirkt die Änderung?\nVollständige Unterstützung für Entwickler- und Status-Icons (FontAwesome, Material, Devicons) in allen Terminals und Wayland-Leisten.\n\n### Betroffene Dateien\n- `/etc/fonts/local.conf` oder `~/.config/fontconfig/fonts.conf`\n\n### Schritt-für-Schritt Anleitung\n1. **Empfohlene Fonts installieren:**\n   ```bash\n   sudo pacman -S ttf-firacode-nerd ttf-jetbrains-mono-nerd noto-fonts noto-fonts-cjk noto-fonts-emoji\n   ```\n2. **Subpixel-Rendering & Hinting konfigurieren (`~/.config/fontconfig/fonts.conf`):**\n   ```xml\n   <?xml version=\"1.0\"?>\n   <!DOCTYPE fontconfig SYSTEM \"urn:fontconfig:fonts.dtd\">\n   <fontconfig>\n       <match target=\"font\">\n           <edit name=\"antialias\" mode=\"assign\"><bool>true</bool></edit>\n           <edit name=\"hinting\" mode=\"assign\"><bool>true</bool></edit>\n           <edit name=\"hintstyle\" mode=\"assign\"><const>hintslight</const></edit>\n           <edit name=\"rgba\" mode=\"assign\"><const>rgb</const></edit>\n       </match>\n   </fontconfig>\n   ```\n3. **Font-Cache aktualisieren:**\n   ```bash\n   fc-cache -fv\n   ```\n\n### Risiken & Fallback\n- **Risiko:** Falsches XML in `fonts.conf` führt dazu, dass fontconfig Schriften ignoriert.\n- **Fallback:** Lösche `~/.config/fontconfig/fonts.conf` und führe erneut `fc-cache -fv` aus."
+    }
+}
