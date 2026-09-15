@@ -16,17 +16,24 @@
 
 ---
 
-## ✨ Features
+## ✨ Features (Version 2.0)
 
+- 🎨 **Aktive 1-Klick Theme- & Dotfile-Engine (NEU)**:
+  Verwandelt den reinen Lese-Guide in ein aktives Schweizer Taschenmesser. Vorkonfigurierte, praxiserprobte Ricing-Dotfiles mit 1 Klick direkt anwenden:
+  - **Starship Shell Prompts**: *Cyber-Neon* (kontraststarker Prompt mit CachyOS-Branding & Git-Status) und *Catppuccin Mocha* (sanftes Pastell-Design).
+  - **Fastfetch Showcase**: *Clean-Cachy* Layout mit Kernel-, BORE-Scheduler- und Hardware-Statusbalken.
+  - **Terminal-Emulatoren**: *Alacritty* und *Kitty* Profile mit 88% Deckkraft, KWin Wayland Hintergrund-Blur und Tokyo-Night Farbpalette.
+- 🔄 **Automatisches Sicherheits-Backup & 1-Klick Rollback (NEU)**:
+  Völlig risikofrei für bestehende Konfigurationen. Jede Theme-Änderung sichert vorherige Dotfiles automatisch mit Zeitstempel in `~/.config/cachyos-rice-architect/backups/`. Mit `python main.py --rollback` oder Taste `[F8]` in der TUI machst du jede Änderung sofort ungeschehen.
 - 🖥️ **System- & Ricing-Auditor**: Automatische Erkennung deiner Systemumgebung (Wayland-Compositor, GPU-Treiber, installierte Ricing-Tools, Nerd Fonts, Shell).
 - 📖 **Kuratierte Architektur-Guides**:
-  1. **KDE Plasma 6 (Wayland) KWin & Effekte**: Transparenz, Klassy-Dekorationen, Blur und KWin-Fensterregeln (z. B. für Glava).
+  1. **KDE Plasma 6 (Wayland) KWin & Effekte**: Transparenz, Klassy-Dekorationen, Blur und KWin-Fensterregeln.
   2. **Standalone Tiling Stacks (Hyprland & Niri)**: Autarke Wayland-Setups, Waybar-Integration, Multimonitor-Setups und Gaps.
   3. **Terminal-Workflow (Fish & Alacritty)**: Starship-Prompt, GPU-beschleunigtes Alacritty-Rendering, Nerd-Font-Typografie.
   4. **System-Tuning & BORE-Scheduler**: Kernel-Optimierungen (x86_64-v3/v4), Sysctl-Tweaks und interaktive Latenzreduktion.
-- 🎨 **Duale Oberfläche**:
-  - **Textual TUI**: Vollgrafische Terminal-Oberfläche mit Kategorien, Suchleiste und Scroll-Viewer.
-  - **CLI-Core**: Direkte Terminal-Befehle für Skripte, schnelle Abfragen und Markdown-Export.
+- 🚀 **Duale Oberfläche**:
+  - **Textual TUI**: Vollgrafische Terminal-Oberfläche mit Kategorien, Suchleiste, Scroll-Viewer und interaktivem Presets-Modal (`[p]`).
+  - **CLI-Core**: Direkte Terminal-Befehle für Skripte (`--presets`, `--apply`, `--rollback`).
 - 💾 **Export-Funktion**: Exportiere alle Anleitungen mit einem Befehl in eigenständige Markdown-Dateien für dein lokales Wiki.
 
 ---
@@ -48,10 +55,12 @@ cachyos-rice-architect/
 │
 └── modules/
     ├── __init__.py             # Modul-Initialisierung
+    ├── backup_manager.py       # Zeitgestempelter Dotfile Backup- & Rollback-Manager
+    ├── theme_engine.py         # Starship, Fastfetch, Alacritty & Kitty Presets
     ├── network.py              # Update-Prüfung gegen CachyOS Wiki
     ├── storage.py              # JSON-Parser, Suchindex & Markdown-Exporter
     ├── system_info.py          # Hardware-, Desktop- & Tool-Auditing
-    └── tui.py                  # Textual-basierte Vollbild-TUI
+    └── tui.py                  # Textual-basierte Vollbild-TUI mit Presets-Modal
 ```
 
 ---

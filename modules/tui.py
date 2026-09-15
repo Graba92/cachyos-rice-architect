@@ -21,6 +21,122 @@ from modules.storage import (
     get_all_tags,
 )
 from modules.system_info import get_full_system_data
+from modules.theme_engine import ThemeEngine
+from modules.backup_manager import BackupManager
+
+
+class ThemePresetsModal(ModalScreen[None]):
+    """Modal zur Auswahl und zum 1-Klick-Anwenden von Ricing-Presets."""
+
+    DEFAULT_CSS = """
+    ThemePresetsModal {
+        align: center middle;
+        background: rgba(17, 17, 27, 0.85);
+    }
+    #preset-box {
+        width: 88;
+        height: 85%;
+        background: #1e1e2e;
+        border: heavy #a6e3a1;
+        padding: 1 2;
+    }
+    #preset-title {
+        text-align: center;
+        text-style: bold;
+        color: #a6e3a1;
+        margin-bottom: 1;
+    }
+    #preset-option-list {
+        height: 7;
+        background: #11111b;
+        border: solid #45475a;
+        margin-bottom: 1;
+    }
+    #preset-desc {
+        background: #181825;
+        border: solid #45475a;
+        padding: 1;
+        color: #cdd6f4;
+        margin-bottom: 1;
+        height: 5;
+    }
+    #preset-preview {
+        background: #11111b;
+        border: solid #313244;
+        padding: 1;
+        height: 1fr;
+        color: #89dceb;
+    }
+    #preset-btn-bar {
+        margin-top: 1;
+        align: right middle;
+    }
+    #preset-btn-bar Button {
+        margin-left: 1;
+    }
+    """
+
+    BINDINGS = [
+        Binding("escape", "dismiss_modal", "Schließen"),
+        Binding("q", "dismiss_modal", "Schließen"),
+    ]
+
+    def compose(self) -> ComposeResult:
+        self.presets = ThemeEngine.get_presets()
+        self.selected_index = 0
+        with Vertical(id="preset-box"):
+            yield Label("🎨 Ricing-Presets & Dotfiles (1-Klick Installer)", id="preset-title")
+            
+            preset_options = []
+            for p in self.presets:
+                preset_options.append(Option(f"[{p.category.upper()}] {p.display_title}", id=f"{p.category}_{p.name}"))
+            
+            yield OptionList(*preset_options, id="preset-option-list")
+            yield Static("", id="preset-desc")
+            with ScrollableContainer(id="preset-preview-container"):
+                yield Static("", id="preset-preview")
+
+            with Horizontal(id="preset-btn-bar"):
+                yield Button("Schließen [Esc]", id="btn-preset-close", variant="default")
+                yield Button("✔ Ausgewähltes Preset anwenden", id="btn-preset-apply", variant="success")
+
+    def on_mount(self) -> None:
+        self.update_selection(0)
+
+    @on(OptionList.OptionHighlighted, "#preset-option-list")
+    def on_highlighted(self, event: OptionList.OptionHighlighted) -> None:
+        self.update_selection(event.option_index)
+
+    def update_selection(self, index: int) -> None:
+        if 0 <= index < len(self.presets):
+            self.selected_index = index
+            p = self.presets[index]
+            desc_widget = self.query_one("#preset-desc", Static)
+            desc_widget.update(
+                f"[bold cyan]{p.display_title}[/bold cyan]\n"
+                f"[magenta]Ziel-Dotfile:[/magenta] {p.target_path}\n"
+                f"[white]{p.description}[/white]"
+            )
+            preview_widget = self.query_one("#preset-preview", Static)
+            preview_widget.update(p.content[:700] + ("\n... [gekürzt]" if len(p.content) > 700 else ""))
+
+    @on(Button.Pressed, "#btn-preset-close")
+    def on_close_btn(self) -> None:
+        self.dismiss(None)
+
+    @on(Button.Pressed, "#btn-preset-apply")
+    def on_apply_btn(self) -> None:
+        if 0 <= self.selected_index < len(self.presets):
+            p = self.presets[self.selected_index]
+            ok, msg = ThemeEngine.apply_preset(p.category, p.name)
+            if ok:
+                self.app.notify(f"Preset '{p.name}' erfolgreich angewendet!\nZiel: {p.target_path}", title="Preset Aktiviert", severity="information", timeout=6)
+            else:
+                self.app.notify(f"Fehler: {msg}", title="Fehler", severity="error")
+            self.dismiss(None)
+
+    def action_dismiss_modal(self) -> None:
+        self.dismiss(None)
 
 
 class SystemDiagnosticModal(ModalScreen[None]):
@@ -308,6 +424,8 @@ class CachyRiceApp(App):
         Binding("s", "focus_search", "Suchen"),
         Binding("e", "export_current", "Export (Guide)"),
         Binding("f3", "export_all", "Gesamtexport"),
+        Binding("p", "show_presets", "Presets / Themes"),
+        Binding("f8", "do_rollback", "Rollback"),
         Binding("d", "show_diagnostics", "System-Diagnose"),
         Binding("f5", "reset_filter", "Reset"),
         Binding("1", "jump_to_guide('1')", "Guide 1", show=False),
@@ -365,9 +483,11 @@ class CachyRiceApp(App):
                     yield Markdown("", id="guide-markdown")
                 
                 with Horizontal(id="action-bar"):
+                    yield Button("🎨 Presets anwenden [p]", variant="primary", id="btn-presets")
                     yield Button("System-Diagnose [d]", variant="default", id="btn-diag")
                     yield Button("Gesamtexport [F3]", variant="warning", id="btn-export-all")
                     yield Button("Guide exportieren [e]", variant="success", id="btn-export-one")
+                    yield Button("🔄 Rollback [F8]", variant="error", id="btn-rollback")
 
         yield Footer()
 
@@ -459,6 +579,24 @@ class CachyRiceApp(App):
         self.current_filtered_keys = list(self.db.keys())
         self.populate_guide_list()
         self.notify("Filter zurückgesetzt.", severity="information")
+
+    def action_show_presets(self) -> None:
+        self.push_screen(ThemePresetsModal())
+
+    @on(Button.Pressed, "#btn-presets")
+    def on_presets_btn(self) -> None:
+        self.action_show_presets()
+
+    def action_do_rollback(self) -> None:
+        ok, msg = BackupManager.restore_latest()
+        if ok:
+            self.notify(f"Rollback erfolgreich:\n{msg}", title="Rollback Ausgeführt", severity="information", timeout=6)
+        else:
+            self.notify(f"Rollback nicht möglich:\n{msg}", title="Rollback Info", severity="warning", timeout=6)
+
+    @on(Button.Pressed, "#btn-rollback")
+    def on_rollback_btn(self) -> None:
+        self.action_do_rollback()
 
     def action_show_diagnostics(self) -> None:
         self.push_screen(SystemDiagnosticModal())

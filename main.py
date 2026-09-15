@@ -22,6 +22,8 @@ from modules.storage import (
 )
 from modules.system_info import display_system_overview
 from modules.tui import run_tui
+from modules.theme_engine import ThemeEngine
+from modules.backup_manager import BackupManager
 
 console = Console()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -77,6 +79,8 @@ class CachyArchitectTUI:
             table.add_row("[4]", "Volltextsuche (Titel, Tags, Inhalt)")
             table.add_row("[5]", "System-Diagnose & Ricing-Tools Check")
             table.add_row("[6]", "Anleitungen exportieren (Markdown)")
+            table.add_row("[7]", "🎨 Ricing-Presets & Dotfiles anwenden (1-Klick Installer)")
+            table.add_row("[8]", "🔄 Dotfile-Backups & 1-Klick Rollback")
             table.add_row("[q]", "Beenden")
 
             console.print(table)
@@ -84,7 +88,7 @@ class CachyArchitectTUI:
 
             choice = Prompt.ask(
                 "[bold blue]>[/bold blue] Aktion wählen",
-                choices=["1", "2", "3", "4", "5", "6", "q", "Q"]
+                choices=["1", "2", "3", "4", "5", "6", "7", "8", "q", "Q"]
             )
 
             if choice == "1":
@@ -99,6 +103,10 @@ class CachyArchitectTUI:
                 self.menu_system_info()
             elif choice == "6":
                 self.menu_export()
+            elif choice == "7":
+                self.menu_presets()
+            elif choice == "8":
+                self.menu_backups()
             elif choice.lower() == "q":
                 console.print("\n[bold green]Architect beendet. Viel Erfolg beim Ricing![/bold green]")
                 sys.exit(0)
@@ -247,6 +255,65 @@ class CachyArchitectTUI:
                 export_single_guide(guide_id, self.db)
                 Prompt.ask("\n[dim]Enter drücken...[/dim]")
 
+    def menu_presets(self):
+        self.print_header()
+        console.print("[bold yellow]🎨 Kuratierte Ricing-Presets (1-Klick Installer):[/bold yellow]\n")
+        presets = ThemeEngine.get_presets()
+        table = Table(header_style="bold cyan", border_style="cyan")
+        table.add_column("Nr.", justify="right", style="bold green")
+        table.add_column("Kategorie", style="magenta")
+        table.add_column("Preset Name", style="bold white")
+        table.add_column("Zielpfad", style="dim")
+        table.add_column("Beschreibung", style="white")
+
+        for idx, p in enumerate(presets, 1):
+            table.add_row(str(idx), p.category, p.name, str(p.target_path), p.description)
+
+        console.print(table)
+        console.print("\n[dim]Wähle eine Nummer zum Anwenden, oder [b] für Zurück.[/dim]")
+        valid_choices = [str(i) for i in range(1, len(presets) + 1)] + ["b", "B"]
+        choice = Prompt.ask("[bold blue]>[/bold blue] Auswahl", choices=valid_choices)
+        if choice.lower() != "b":
+            chosen = presets[int(choice) - 1]
+            confirm = Prompt.ask(f"Preset '{chosen.display_title}' jetzt auf {chosen.target_path} anwenden? [y/N]", default="n")
+            if confirm.lower() == "y":
+                ok, msg = ThemeEngine.apply_preset(chosen.category, chosen.name)
+                if ok:
+                    console.print(f"\n[bold green]{msg}[/bold green]")
+                else:
+                    console.print(f"\n[bold red]{msg}[/bold red]")
+            Prompt.ask("\n[dim]Enter drücken...[/dim]")
+
+    def menu_backups(self):
+        self.print_header()
+        console.print("[bold yellow]🔄 Dotfile-Backups & Rollback-Manager:[/bold yellow]\n")
+        backups = BackupManager.list_backups()
+        if not backups:
+            console.print("[dim]Keine Backups vorhanden. Bei jedem angewendeten Preset wird automatisch ein Backup angelegt.[/dim]")
+            Prompt.ask("\n[dim]Enter drücken...[/dim]")
+            return
+
+        table = Table(header_style="bold cyan", border_style="cyan")
+        table.add_column("Zeitstempel", style="cyan")
+        table.add_column("Datei", style="bold white")
+        table.add_column("Tag", style="magenta")
+        table.add_column("Pfad", style="dim")
+
+        for b in backups[:10]:
+            table.add_row(b.timestamp_human, Path(b.target_path).name, b.tag, b.target_path)
+
+        console.print(table)
+        console.print("\n[cyan][1][/cyan] Letztes Backup wiederherstellen (Rollback)")
+        console.print("[dim][b] Zurück zum Hauptmenü[/dim]\n")
+        choice = Prompt.ask("[bold blue]>[/bold blue] Auswahl", choices=["1", "b", "B"])
+        if choice == "1":
+            ok, msg = BackupManager.restore_latest()
+            if ok:
+                console.print(f"\n[bold green]✔ {msg}[/bold green]")
+            else:
+                console.print(f"\n[bold red]❌ {msg}[/bold red]")
+            Prompt.ask("\n[dim]Enter drücken...[/dim]")
+
     def display_article(self, doc_id: str):
         if doc_id not in self.db:
             return
@@ -293,12 +360,61 @@ def cli_list_guides(db):
 
     console.print(table)
 
+def cli_list_presets():
+    presets = ThemeEngine.get_presets()
+    table = Table(title="🎨 CachyRice-Architect — Vorkonfigurierte Ricing-Presets", header_style="bold cyan")
+    table.add_column("Kategorie", style="magenta", justify="left")
+    table.add_column("Name", style="bold green")
+    table.add_column("Titel", style="bold white")
+    table.add_column("Ziel-Dotfile", style="cyan")
+    table.add_column("Beschreibung", style="white")
+    for p in presets:
+        table.add_row(p.category, p.name, p.display_title, str(p.target_path), p.description)
+    console.print(table)
+    console.print("\n[dim]Anwenden mit: python main.py --apply <kategorie> <name>[/dim]")
+
+def cli_apply_preset(category: str, name: str):
+    console.print(f"[bold cyan]Wende Preset '{category}/{name}' an...[/bold cyan]")
+    ok, msg = ThemeEngine.apply_preset(category, name)
+    if ok:
+        console.print(f"[bold green]{msg}[/bold green]")
+    else:
+        console.print(f"[bold red]{msg}[/bold red]")
+        sys.exit(1)
+
+def cli_rollback():
+    console.print("[bold cyan]Führe Rollback auf das letzte Backup durch...[/bold cyan]")
+    ok, msg = BackupManager.restore_latest()
+    if ok:
+        console.print(f"[bold green]{msg}[/bold green]")
+    else:
+        console.print(f"[bold red]{msg}[/bold red]")
+        sys.exit(1)
+
+def cli_list_backups():
+    backups = BackupManager.list_backups()
+    if not backups:
+        console.print("[yellow]Keine Konfigurations-Backups vorhanden.[/yellow]")
+        return
+    table = Table(title="🔄 Vorhandene Dotfile-Backups", header_style="bold cyan")
+    table.add_column("Datum & Uhrzeit", style="cyan")
+    table.add_column("Zieldatei", style="bold white")
+    table.add_column("Tag", style="magenta")
+    table.add_column("Backup-Pfad", style="dim")
+    for b in backups:
+        table.add_row(b.timestamp_human, Path(b.target_path).name, b.tag, b.backup_file)
+    console.print(table)
+
 def main():
     parser = argparse.ArgumentParser(
         description="CachyRice-Architect Suite: Ricing & System Control für CachyOS / KDE Plasma 6 / Wayland"
     )
     parser.add_argument("-i", "--info", action="store_true", help="Zeigt Systemumgebung und Ricing-Tools Diagnose")
     parser.add_argument("-l", "--list", action="store_true", help="Listet alle verfügbaren Module tabellarisch auf")
+    parser.add_argument("-p", "--presets", action="store_true", help="Listet alle installierbaren Ricing-Presets auf (Starship, Fastfetch, Alacritty, Kitty)")
+    parser.add_argument("--apply", nargs=2, metavar=("CATEGORY", "NAME"), help="Wendet ein Ricing-Preset risikofrei an (z.B. --apply starship cyber-neon)")
+    parser.add_argument("--rollback", action="store_true", help="Macht die letzte Ricing-Änderung rückgängig (stellt vorheriges Backup wieder her)")
+    parser.add_argument("--backups", action="store_true", help="Listet alle vorhandenen Dotfile-Backups auf")
     parser.add_argument("-r", "--read", type=str, metavar="ID", help="Gibt eine bestimmte Anleitung direkt im Terminal aus")
     parser.add_argument("-s", "--search", type=str, metavar="QUERY", help="Sucht gezielt nach Begriffen in den Guides")
     parser.add_argument("-e", "--export", type=str, nargs="?", const="default", metavar="PATH", help="Exportiert alle Guides als Markdown")
@@ -310,6 +426,22 @@ def main():
     # Direktmodi via CLI
     if args.info:
         display_system_overview()
+        return
+
+    if args.presets:
+        cli_list_presets()
+        return
+
+    if args.apply:
+        cli_apply_preset(args.apply[0], args.apply[1])
+        return
+
+    if args.rollback:
+        cli_rollback()
+        return
+
+    if args.backups:
+        cli_list_backups()
         return
 
     db = load_database(DB_FILE)
