@@ -1,11 +1,12 @@
+[🇩🇪 Zur deutschen Dokumentation wechseln](README_DE.md) | [🇬🇧 Switch to English Documentation](README.md)
+
 # ⚡ CachyRice-Architect
 
+[![GitHub](https://img.shields.io/badge/GitHub-Graba92%2Fcachyos--rice--architect-blue?logo=github)](https://github.com/Graba92/cachyos-rice-architect)
 [![Platform](https://img.shields.io/badge/Platform-Arch%20Linux%20%7C%20CachyOS-1793d1.svg?style=flat&logo=archlinux)](https://cachyos.org)
 [![Desktop](https://img.shields.io/badge/Desktop-KDE%20Plasma%206%20%7C%20Wayland-3399ff.svg)](https://kde.org)
 [![TUI](https://img.shields.io/badge/UI-Textual%20%2B%20Rich-green.svg)](https://textual.textualize.io)
 [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
-
-[🇬🇧 Switch to English Documentation](README.md)
 
 <p align="center">
   <img src="preview_tui.png" alt="CachyRice-Architect TUI" width="900">
