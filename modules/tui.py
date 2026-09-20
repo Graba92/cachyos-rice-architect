@@ -23,6 +23,7 @@ from modules.storage import (
 from modules.system_info import get_full_system_data
 from modules.theme_engine import ThemeEngine
 from modules.backup_manager import BackupManager
+from modules.i18n import t, toggle_language, get_language
 
 
 class ThemePresetsModal(ModalScreen[None]):
@@ -418,15 +419,16 @@ class CachyRiceApp(App):
     """
 
     BINDINGS = [
-        Binding("q", "quit", "Beenden", priority=True),
-        Binding("escape", "quit", "Beenden"),
-        Binding("/", "focus_search", "Suchen"),
-        Binding("s", "focus_search", "Suchen"),
+        Binding("q", "quit", "Beenden / Quit", priority=True),
+        Binding("escape", "quit", "Beenden / Quit"),
+        Binding("/", "focus_search", "Suchen / Search"),
+        Binding("s", "focus_search", "Suchen / Search"),
         Binding("e", "export_current", "Export (Guide)"),
-        Binding("f3", "export_all", "Gesamtexport"),
+        Binding("f3", "export_all", "Gesamtexport / Export All"),
         Binding("p", "show_presets", "Presets / Themes"),
         Binding("f8", "do_rollback", "Rollback"),
-        Binding("d", "show_diagnostics", "System-Diagnose"),
+        Binding("d", "show_diagnostics", "System-Diagnose / Doctor"),
+        Binding("l", "toggle_lang", "🌐 DE/EN"),
         Binding("f5", "reset_filter", "Reset"),
         Binding("1", "jump_to_guide('1')", "Guide 1", show=False),
         Binding("2", "jump_to_guide('2')", "Guide 2", show=False),
@@ -438,6 +440,12 @@ class CachyRiceApp(App):
         Binding("8", "jump_to_guide('8')", "Guide 8", show=False),
         Binding("9", "jump_to_guide('9')", "Guide 9", show=False),
     ]
+
+    def action_toggle_lang(self) -> None:
+        new_lang = toggle_language()
+        self.notify(f"Sprache / Language: {new_lang.upper()}", timeout=2.0)
+        self.query_one("#lbl-filter", Label).update(f"🔍 {t('menu_title')} (Taste: /)")
+        self.query_one("#lbl-available-guides", Label).update(f"📚 {t('tab_guides')}:")
 
     def __init__(self, db_path: Optional[str] = None):
         super().__init__()
@@ -464,13 +472,13 @@ class CachyRiceApp(App):
         with Horizontal(id="main-layout"):
             # Left panel
             with Vertical(id="left-panel"):
-                yield Label("🔍 Filter & Suche (Taste: /)", classes="panel-heading")
+                yield Label(f"🔍 {t('menu_title')} (Taste: /)", id="lbl-filter", classes="panel-heading")
                 yield Input(placeholder="Suchbegriff (Titel, Tag, Text)...", id="search-box")
                 
                 cat_options = [("Alle Kategorien", "ALL")] + [(c, c) for c in sorted(self.categories.keys())]
                 yield Select(options=cat_options, value="ALL", id="category-select", allow_blank=False)
                 
-                yield Label("📚 Verfügbare Guides:", classes="panel-heading")
+                yield Label(f"📚 {t('tab_guides')}:", id="lbl-available-guides", classes="panel-heading")
                 yield OptionList(id="guide-list")
 
             # Center panel

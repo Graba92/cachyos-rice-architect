@@ -17,10 +17,29 @@ from modules.storage import load_database, get_categories, get_all_tags
 from modules.theme_engine import ThemeEngine, PresetDefinition
 from modules.backup_manager import BackupManager
 from modules.system_info import check_installed_tools, check_nerd_fonts, run_rice_doctor
+from modules.i18n import t, set_language, get_language, toggle_language
 
 
 class TestCachyRiceArchitect(unittest.TestCase):
     """Testet alle Kernmodule von CachyRice-Architect."""
+
+    def test_i18n_translation(self):
+        """Prüft i18n-Sprachumschaltung und String-Auflösung."""
+        set_language("de")
+        self.assertEqual(get_language(), "de")
+        self.assertIn("RICE-ARCHITECT", t("app_title"))
+        self.assertEqual(t("btn_quit"), "Beenden")
+
+        set_language("en")
+        self.assertEqual(get_language(), "en")
+        self.assertIn("RICE-ARCHITECT", t("app_title"))
+        self.assertEqual(t("btn_quit"), "Quit")
+
+    def test_i18n_toggle(self):
+        """Prüft wechselweises Umschalten."""
+        set_language("de")
+        self.assertEqual(toggle_language(), "en")
+        self.assertEqual(toggle_language(), "de")
 
     def test_database_loading_and_categories(self):
         """Guides-Datenbank muss valide Modul-Einträge mit Titeln und Kategorien enthalten."""

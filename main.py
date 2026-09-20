@@ -24,6 +24,14 @@ from modules.system_info import display_system_overview, run_rice_doctor, displa
 from modules.tui import run_tui
 from modules.theme_engine import ThemeEngine
 from modules.backup_manager import BackupManager
+from modules.i18n import (
+    t,
+    set_language,
+    get_language,
+    toggle_language,
+    load_configured_language,
+    save_configured_language,
+)
 
 console = Console()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -73,25 +81,30 @@ class CachyArchitectTUI:
             table.add_column("Key", style="bold green", justify="right")
             table.add_column("Action", style="white")
 
-            table.add_row("[1]", "Alle Module & Anleitungen durchstöbern")
-            table.add_row("[2]", "Nach Kategorien filtern")
-            table.add_row("[3]", "Nach Schlagwörtern (Tags) filtern")
-            table.add_row("[4]", "Volltextsuche (Titel, Tags, Inhalt)")
-            table.add_row("[5]", "System-Diagnose & Ricing-Tools Check")
-            table.add_row("[6]", "Anleitungen exportieren (Markdown)")
-            table.add_row("[7]", "🎨 Ricing-Presets & Dotfiles anwenden (1-Klick Installer)")
-            table.add_row("[8]", "🔄 Dotfile-Backups & 1-Klick Rollback")
-            table.add_row("[q]", "Beenden")
+            table.add_row("[1]", t("menu_opt_1"))
+            table.add_row("[2]", t("menu_opt_2"))
+            table.add_row("[3]", t("menu_opt_3"))
+            table.add_row("[4]", t("menu_opt_4"))
+            table.add_row("[5]", t("menu_opt_5"))
+            table.add_row("[6]", t("menu_opt_6"))
+            table.add_row("[7]", t("menu_opt_7"))
+            table.add_row("[8]", t("menu_opt_8"))
+            table.add_row("[l]", t("menu_opt_lang"))
+            table.add_row("[q]", t("menu_opt_quit"))
 
             console.print(table)
             console.print()
 
             choice = Prompt.ask(
-                "[bold blue]>[/bold blue] Aktion wählen",
-                choices=["1", "2", "3", "4", "5", "6", "7", "8", "q", "Q"]
+                f"[bold blue]>[/bold blue] {t('menu_title')}",
+                choices=["1", "2", "3", "4", "5", "6", "7", "8", "l", "L", "q", "Q"]
             )
 
-            if choice == "1":
+            if choice in ("l", "L"):
+                new_lang = toggle_language()
+                console.print(f"[bold green]{t('cli_lang_saved', lang=new_lang)}[/bold green]")
+                continue
+            elif choice == "1":
                 self.menu_browse()
             elif choice == "2":
                 self.menu_categories()
@@ -421,9 +434,12 @@ def cli_list_backups():
     console.print(table)
 
 def main():
+    load_configured_language()
+
     parser = argparse.ArgumentParser(
         description="CachyRice-Architect Suite: Ricing & System Control für CachyOS / KDE Plasma 6 / Wayland"
     )
+    parser.add_argument("--lang", choices=["de", "en"], help="Sprache wählen ('de' oder 'en') / Select language ('de' or 'en')")
     parser.add_argument("-i", "--info", action="store_true", help="Zeigt Systemumgebung und Ricing-Tools Diagnose")
     parser.add_argument("-d", "--doctor", action="store_true", help="Führt eine umfassende Ricing-, Font- & Wayland-Diagnose durch")
     parser.add_argument("-l", "--list", action="store_true", help="Listet alle verfügbaren Module tabellarisch auf")
@@ -440,6 +456,10 @@ def main():
     parser.add_argument("--no-net", action="store_true", help="Deaktiviert die Online-Suche nach Aktualisierungen")
 
     args = parser.parse_args()
+
+    if args.lang:
+        set_language(args.lang)
+        save_configured_language(args.lang)
 
     # Direktmodi via CLI
     if args.info:

@@ -99,18 +99,20 @@ pip install -r requirements.txt
 ### 1. Interaktive TUI starten
 ```bash
 ./run.sh
-# oder
-python3 main.py
+# oder mit expliziter Sprache starten
+python3 main.py --lang de
+python3 main.py --lang en
 ```
+> **Tipp**: In der interaktiven TUI kannst du mit der Taste <kbd>L</kbd> jederzeit nahtlos zwischen **Deutsch** und **Englisch** umschalten!
 
 ### 2. CLI-Befehle (Headless)
 
 ```bash
-# System- & Ricing-Tools Diagnose ausführen:
-python3 main.py --info
+# System- & Ricing-Tools Diagnose ausführen (auf Deutsch oder Englisch):
+python3 main.py --info --lang de
 
 # Umfassenden Rice-Doctor ausführen (Wayland-Sitzung, Nerd-Fonts, GPU-Terminals):
-python3 main.py --doctor
+python3 main.py --doctor --lang de
 
 # Alle verfügbaren 1-Klick Ricing-Presets anzeigen:
 python3 main.py --presets
