@@ -20,7 +20,7 @@ from modules.storage import (
     get_categories,
     get_all_tags,
 )
-from modules.system_info import display_system_overview
+from modules.system_info import display_system_overview, run_rice_doctor, display_rice_doctor
 from modules.tui import run_tui
 from modules.theme_engine import ThemeEngine
 from modules.backup_manager import BackupManager
@@ -373,14 +373,29 @@ def cli_list_presets():
     console.print(table)
     console.print("\n[dim]Anwenden mit: python main.py --apply <kategorie> <name>[/dim]")
 
-def cli_apply_preset(category: str, name: str):
-    console.print(f"[bold cyan]Wende Preset '{category}/{name}' an...[/bold cyan]")
-    ok, msg = ThemeEngine.apply_preset(category, name)
+def cli_apply_preset(category: str, name: str, dry_run: bool = False):
+    if dry_run:
+        console.print(f"[bold yellow]🔍 Simuliere Anwendung von Preset '{category}/{name}' (Dry-Run)...[/bold yellow]")
+    else:
+        console.print(f"[bold cyan]Wende Preset '{category}/{name}' an...[/bold cyan]")
+    ok, msg = ThemeEngine.apply_preset(category, name, dry_run=dry_run)
     if ok:
         console.print(f"[bold green]{msg}[/bold green]")
     else:
         console.print(f"[bold red]{msg}[/bold red]")
         sys.exit(1)
+
+def cli_diff_preset(category: str, name: str):
+    ok, diff_text = ThemeEngine.get_diff(category, name)
+    if ok:
+        console.print(Panel(diff_text, title=f"🔍 Diff für Preset '{category}/{name}'", border_style="cyan"))
+    else:
+        console.print(f"[bold red]{diff_text}[/bold red]")
+        sys.exit(1)
+
+def cli_doctor():
+    report = run_rice_doctor()
+    display_rice_doctor(report)
 
 def cli_rollback():
     console.print("[bold cyan]Führe Rollback auf das letzte Backup durch...[/bold cyan]")
@@ -410,9 +425,12 @@ def main():
         description="CachyRice-Architect Suite: Ricing & System Control für CachyOS / KDE Plasma 6 / Wayland"
     )
     parser.add_argument("-i", "--info", action="store_true", help="Zeigt Systemumgebung und Ricing-Tools Diagnose")
+    parser.add_argument("-d", "--doctor", action="store_true", help="Führt eine umfassende Ricing-, Font- & Wayland-Diagnose durch")
     parser.add_argument("-l", "--list", action="store_true", help="Listet alle verfügbaren Module tabellarisch auf")
-    parser.add_argument("-p", "--presets", action="store_true", help="Listet alle installierbaren Ricing-Presets auf (Starship, Fastfetch, Alacritty, Kitty)")
+    parser.add_argument("-p", "--presets", action="store_true", help="Listet alle installierbaren Ricing-Presets auf (Starship, Fastfetch, Alacritty, Kitty, Ghostty, Konsole, Rofi, Waybar)")
     parser.add_argument("--apply", nargs=2, metavar=("CATEGORY", "NAME"), help="Wendet ein Ricing-Preset risikofrei an (z.B. --apply starship cyber-neon)")
+    parser.add_argument("--diff", nargs=2, metavar=("CATEGORY", "NAME"), help="Zeigt das Diff eines Presets gegen die aktuelle Konfiguration an")
+    parser.add_argument("--dry-run", action="store_true", help="Simuliert das Anwenden eines Presets ohne Dateien zu verändern")
     parser.add_argument("--rollback", action="store_true", help="Macht die letzte Ricing-Änderung rückgängig (stellt vorheriges Backup wieder her)")
     parser.add_argument("--backups", action="store_true", help="Listet alle vorhandenen Dotfile-Backups auf")
     parser.add_argument("-r", "--read", type=str, metavar="ID", help="Gibt eine bestimmte Anleitung direkt im Terminal aus")
@@ -428,12 +446,20 @@ def main():
         display_system_overview()
         return
 
+    if args.doctor:
+        cli_doctor()
+        return
+
+    if args.diff:
+        cli_diff_preset(args.diff[0], args.diff[1])
+        return
+
     if args.presets:
         cli_list_presets()
         return
 
     if args.apply:
-        cli_apply_preset(args.apply[0], args.apply[1])
+        cli_apply_preset(args.apply[0], args.apply[1], dry_run=args.dry_run)
         return
 
     if args.rollback:

@@ -155,3 +155,100 @@ def display_system_overview():
             tool_table.add_row(cat, t["label"], status, path_str)
 
     console.print(tool_table)
+
+
+def check_nerd_fonts() -> List[str]:
+    """Prüft, welche Nerd Fonts oder Coding-Fonts im System installiert sind."""
+    if not shutil.which("fc-list"):
+        return []
+    try:
+        import subprocess
+        res = subprocess.run(["fc-list", ":", "family"], capture_output=True, text=True, timeout=3)
+        families = set()
+        for line in res.stdout.splitlines():
+            for part in line.split(","):
+                p = part.strip()
+                p_lower = p.lower()
+                if any(k in p_lower for k in ["nerd", "fira", "jetbrains", "meslo", "cascadia", "hack"]):
+                    families.add(p)
+        return sorted(list(families))
+    except Exception:
+        return []
+
+
+def run_rice_doctor() -> dict:
+    """Führt eine umfassende Ricing- & Wayland-Systemdiagnose durch."""
+    sys_data = get_full_system_data()
+    fonts = check_nerd_fonts()
+    tools = sys_data.get("tools", {})
+
+    checks = []
+
+    # 1. Wayland & Compositor
+    session = sys_data.get("session_type", "").lower()
+    desktop = sys_data.get("desktop", "")
+    if session == "wayland":
+        checks.append({"name": "Wayland Sitzung", "status": "OK", "msg": f"Aktive Wayland-Session ({desktop})"})
+    else:
+        checks.append({"name": "Wayland Sitzung", "status": "WARN", "msg": f"Aktive Sitzung: {session} (X11). Einige Ricing-Effekte erfordern Wayland"})
+
+    # 2. Nerd Fonts
+    if fonts:
+        checks.append({"name": "Nerd Fonts & Glyphen", "status": "OK", "msg": f"{len(fonts)} Fonts gefunden ({', '.join(fonts[:2])}{'...' if len(fonts) > 2 else ''})"})
+    else:
+        checks.append({"name": "Nerd Fonts & Glyphen", "status": "WARN", "msg": "Keine Nerd Fonts gefunden. Icons in Starship/Waybar werden möglicherweise nicht dargestellt"})
+
+    # 3. Terminals
+    term_tools = tools.get("Terminals", [])
+    installed_terms = [t["label"] for t in term_tools if t["installed"]]
+    if installed_terms:
+        checks.append({"name": "Moderne GPU-Terminals", "status": "OK", "msg": f"{len(installed_terms)} installiert ({', '.join(installed_terms)})"})
+    else:
+        checks.append({"name": "Moderne GPU-Terminals", "status": "WARN", "msg": "Kein modernes Terminal wie Alacritty, Kitty oder Ghostty gefunden"})
+
+    # 4. Shell & Prompt
+    shell_tools = tools.get("Shell & Prompt", [])
+    installed_shells = [t["label"] for t in shell_tools if t["installed"]]
+    checks.append({"name": "Shell-Ökosystem", "status": "OK" if "Starship Prompt" in [t["label"] for t in shell_tools if t["installed"]] or "Fish Shell" in installed_shells else "INFO", "msg": f"Bereit: {', '.join(installed_shells)}"})
+
+    # 5. Launcher & Visuals
+    launchers = [t["label"] for t in tools.get("Launcher", []) if t["installed"]]
+    if launchers:
+        checks.append({"name": "App-Launcher (Wayland)", "status": "OK", "msg": f"Aktiv: {', '.join(launchers)}"})
+    else:
+        checks.append({"name": "App-Launcher (Wayland)", "status": "INFO", "msg": "Kein Wayland-Launcher wie Rofi-Wayland oder Fuzzel installiert"})
+
+    ok_count = sum(1 for c in checks if c["status"] == "OK")
+    score = int((ok_count / len(checks)) * 100) if checks else 0
+
+    return {
+        "score": score,
+        "checks": checks,
+        "fonts": fonts,
+        "system": sys_data
+    }
+
+
+def display_rice_doctor(report: dict) -> None:
+    score = report.get("score", 0)
+    score_color = "bold green" if score >= 80 else "bold yellow" if score >= 60 else "bold red"
+
+    table = Table(title=f"🎨 CachyRice-Architect Doctor (Rice-Score: [{score_color}]{score}%[/{score_color}])", border_style="bright_magenta", show_header=True)
+    table.add_column("Komponente / Subsystem", style="bold cyan", width=30)
+    table.add_column("Status", justify="center", width=10)
+    table.add_column("Details & Empfehlungen", style="white")
+
+    for check in report.get("checks", []):
+        st = check.get("status", "INFO")
+        if st == "OK":
+            st_str = "[bold green]✔ OK[/]"
+        elif st == "WARN":
+            st_str = "[bold yellow]⚠ WARN[/]"
+        elif st == "FAIL":
+            st_str = "[bold red]✘ FEHLER[/]"
+        else:
+            st_str = "[dim]ℹ INFO[/]"
+        table.add_row(check.get("name", ""), st_str, check.get("msg", ""))
+
+    console.print(table)
+

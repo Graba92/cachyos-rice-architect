@@ -109,6 +109,31 @@ python3 main.py
 # Run system and ricing environment diagnostics:
 python3 main.py --info
 
+# Run full Rice Doctor check (Wayland session, Nerd Fonts, GPU terminals):
+python3 main.py --doctor
+
+# List all available 1-click theme presets:
+python3 main.py --presets
+
+# Show unified diff between your current config and a preset:
+python3 main.py --diff starship cyber-neon
+
+# Simulate applying a preset safely without modifying files:
+python3 main.py --apply starship cyber-neon --dry-run
+
+# Apply a preset (automatically creates timestamped backup):
+python3 main.py --apply starship cyber-neon
+python3 main.py --apply konsole cyber-neon
+python3 main.py --apply ghostty catppuccin-mocha
+python3 main.py --apply rofi wayland-neon
+python3 main.py --apply waybar glass-blur
+
+# 1-Click rollback to the previous configuration backup:
+python3 main.py --rollback
+
+# List all existing configuration backups:
+python3 main.py --backups
+
 # List all available guides in a tabular view:
 python3 main.py --list
 
@@ -120,6 +145,9 @@ python3 main.py --search kwin
 
 # Export all guides to standalone Markdown files:
 python3 main.py --export ./exported_guides/
+
+# Run unit test suite:
+python3 -m unittest discover -s tests -p "test_*.py"
 
 # Classic interactive console menu fallback:
 python3 main.py --cli

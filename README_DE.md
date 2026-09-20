@@ -109,6 +109,31 @@ python3 main.py
 # System- & Ricing-Tools Diagnose ausführen:
 python3 main.py --info
 
+# Umfassenden Rice-Doctor ausführen (Wayland-Sitzung, Nerd-Fonts, GPU-Terminals):
+python3 main.py --doctor
+
+# Alle verfügbaren 1-Klick Ricing-Presets anzeigen:
+python3 main.py --presets
+
+# Unified-Diff eines Presets gegen die aktuelle Konfiguration anzeigen:
+python3 main.py --diff starship cyber-neon
+
+# Preset-Anwendung risikofrei simulieren (Dry-Run):
+python3 main.py --apply starship cyber-neon --dry-run
+
+# Preset anwenden (erstellt vollautomatisches Zeitstempel-Backup):
+python3 main.py --apply starship cyber-neon
+python3 main.py --apply konsole cyber-neon
+python3 main.py --apply ghostty catppuccin-mocha
+python3 main.py --apply rofi wayland-neon
+python3 main.py --apply waybar glass-blur
+
+# 1-Klick Rollback auf das vorherige Backup:
+python3 main.py --rollback
+
+# Alle vorhandenen Backups auflisten:
+python3 main.py --backups
+
 # Alle verfügbaren Guides tabellarisch auflisten:
 python3 main.py --list
 
@@ -120,6 +145,9 @@ python3 main.py --search kwin
 
 # Alle Guides als Markdown-Dateien exportieren:
 python3 main.py --export ./guides_backup/
+
+# Test-Suite ausführen:
+python3 -m unittest discover -s tests -p "test_*.py"
 
 # Klassisches Konsolenmenü (Fallback ohne Textual):
 python3 main.py --cli
